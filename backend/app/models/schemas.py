@@ -6,7 +6,7 @@ from app.models.models import JobStatus
 
 
 class JobCreate(BaseModel):
-    name: str = Field(..., min_legnth=1, max_legnth=225)
+    name: str = Field(..., min_length=1, max_length=225)
     sequence: str = Field(..., min_length=1)
     target_property: Optional[str] = None
 
@@ -15,12 +15,12 @@ class JobResponse(BaseModel):
     id: UUID
     name: str
     sequence: str
-    target_property: Optional[str]
+    target_property: Optional[str] = None
     status: JobStatus
-    plddt_score: Optional[float]
-    rosetta_energy: Optional[float]
-    reward_history: Optional[List[float]]
-    structure_path: Optional[str]
+    plddt_score: Optional[float] = None
+    rosetta_energy: Optional[float] = None
+    reward_history: Optional[List[float]] = None
+    structure_path: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -32,8 +32,8 @@ class JobStatusResponse(BaseModel):
     id: UUID
     name: str
     status: JobStatus
-    plddt_score: Optional[float]
-    rosetta_energy: Optional[float]
+    plddt_score: Optional[float] = None
+    rosetta_energy: Optional[float] = None
     created_at: datetime
     updated_at: datetime
 

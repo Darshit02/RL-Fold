@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import engine, Base
+from app.api import jobs, experiments
 from pathlib import Path
 
 app = FastAPI(
@@ -17,6 +18,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(jobs.router)
+app.include_router(experiments.router)
 
 @app.on_event("startup")
 async def startup():

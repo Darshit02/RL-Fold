@@ -22,7 +22,7 @@ class Job(Base):
     target_property = Column(String(100), nullable=True)
     status = Column(Enum(JobStatus), default=JobStatus.pending, nullable=False)
 
-    pddt_score = Column(Float, nullable=True)
+    plddt_score = Column(Float, nullable=True)
     rosetta_energy = Column(Float, nullable=True)
     reward_history = Column(JSON, nullable=True)
 
