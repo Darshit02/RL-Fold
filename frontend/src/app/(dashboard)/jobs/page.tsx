@@ -204,7 +204,7 @@ export default function JobsPage() {
               <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: 20 }}>
                 No jobs yet. Submit your first protein design job.
               </div>
-              <Button size="sm" onClick={() => setShowForm(true)}>Submit first job</Button>
+              {/* <Button size="sm" onClick={() => setShowForm(true)}>Submit first job</Button> */}
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>

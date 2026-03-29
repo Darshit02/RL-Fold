@@ -13,6 +13,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend
 } from 'recharts'
+import { FileDownIcon } from 'lucide-react'
 
 export default function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -49,15 +50,12 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         subtitle={`Job ID: ${job.id}`}
         actions={
           job.status === 'completed' && (
-            <a href={resultsApi.downloadUrl(job.id)} download>
-              <Button size="sm" variant="ghost">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 15V3M7 10l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M3 21h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
+            <Button size="lg" variant="secondary" className="bg-secondary text-gray-300">
+              <a href={resultsApi.downloadUrl(job.id)} download>
+                <FileDownIcon className='h-14 w-14' />
                 Download PDB
-              </Button>
-            </a>
+              </a>
+            </Button>
           )
         }
       />
