@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { authApi } from '@/lib/api'
 import { useAppStore } from '@/store'
+import { toast } from "sonner"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -27,11 +28,10 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [serverError, setServerError] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
     if (searchParams.get('registered')) {
-      setSuccessMessage('Account created successfully! Please sign in.')
+      toast.success('Account created successfully! Please sign in.')
     }
   }, [searchParams])
 
@@ -69,7 +69,6 @@ export default function LoginPage() {
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
       setForm(p => ({ ...p, [key]: e.target.value }))
       setErrors(p => ({ ...p, [key]: '' }))
-      setSuccessMessage('')
     },
   })
 
@@ -134,13 +133,6 @@ export default function LoginPage() {
                 {errors.password && <span className="text-xs text-red-500 px-1">{errors.password}</span>}
               </div>
 
-              {successMessage && (
-                <div className="text-sm text-accent bg-accent/10 border border-accent/20 px-4 py-3 rounded-xl flex items-start gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                  <span className="shrink-0 mt-0.5">✅</span>
-                  <span>{successMessage}</span>
-                </div>
-              )}
-
               {serverError && (
                 <div className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 px-4 py-3 rounded-xl flex items-start gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
                   <span className="shrink-0 mt-0.5">⚠️</span>
@@ -170,17 +162,7 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            {/* Bottom Links */}
-            <div className="mt-12 pt-8 border-t border-border flex justify-center gap-8 text-xs text-text-muted font-medium">
-              {['Privacy Policy', 'Terms of Service', 'API Docs'].map(item => (
-                <span
-                  key={item}
-                  className="cursor-pointer hover:text-text-primary transition-colors"
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
+         
           </div>
         </div>
       </div>

@@ -64,6 +64,10 @@ class UserCreate(BaseModel):
     username: str
     password: str = Field(..., max_length=72)
 
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
 class UserResponse(BaseModel):
     id: UUID
     email: str
