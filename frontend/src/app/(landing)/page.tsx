@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import Image from 'next/image'
+import LOGO from "../../../public/logo/logo.svg"
 
 const AA_CHARS = 'ACDEFGHIKLMNPQRSTVWY'
 
@@ -294,19 +296,17 @@ export default function LandingPage() {
         background: 'color-mix(in srgb, var(--bg-base), transparent 15%)',
         backdropFilter: 'blur(12px)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
           <div style={{
-            width: 28, height: 28, borderRadius: 7, background: 'var(--accent)',
+            
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                stroke="var(--bg-base)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)' }}>
-            RL-Fold
-          </span>
+           <Image
+           src={LOGO}
+           alt='logo'
+           height={200}
+           width={200}
+           />
           <span style={{
             fontFamily: 'var(--font-mono)', fontSize: '10px',
             color: 'var(--accent)', background: 'var(--accent-dim)',
@@ -314,10 +314,11 @@ export default function LandingPage() {
           }}>
             BETA
           </span>
+          </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <ThemeToggle />
+          {/* <ThemeToggle /> */}
           <Link href="/login" className='cursor-pointer' style={{
             color: 'var(--text-secondary)', textDecoration: 'none',
             padding: '6px 14px', borderRadius: 6,

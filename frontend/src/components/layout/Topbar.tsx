@@ -50,7 +50,7 @@ export default function Topbar({ title, subtitle, actions }: TopbarProps) {
             {actions}
           </div>
         )}
-        <ThemeToggle />
+        {/* <ThemeToggle /> */}
       </div>
     </div>
   )
