@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api import jobs, experiments, ws
+from app.api import jobs, experiments, ws , results , auth
 from pathlib import Path
 
 app = FastAPI(
@@ -19,9 +19,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(jobs.router)
 app.include_router(experiments.router)
 app.include_router(ws.router)
+app.include_router(results.router)
 
 
 @app.on_event("startup")
