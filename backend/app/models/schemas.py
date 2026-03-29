@@ -62,7 +62,7 @@ class ExperimentResponse(BaseModel):
 class UserCreate(BaseModel):
     email: str
     username: str
-    password: str
+    password: str = Field(..., max_length=72)
 
 class UserResponse(BaseModel):
     id: UUID
@@ -77,7 +77,3 @@ class UserResponse(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-
-class LoginRequest(BaseModel):
-    email: str
-    password: str
