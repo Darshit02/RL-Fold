@@ -1,9 +1,2 @@
-import Image from "next/image";
-
-export default function Home() {
-  return (
-    <div className="text-7xl">
-    Helklo
-    </div>
-  );
-}
+import LandingPage from './(landing)/page'
+export default LandingPage
