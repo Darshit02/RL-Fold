@@ -86,7 +86,7 @@ function LoginForm() {
           </span>
         </Link>
         <div className='px-6 py-5 border rounded-xl'>
-          <div className="w-full max-md relative z-10">
+          <div className="w-full max-w-md relative z-10">
             {/* Header */}
             <div className="mb-10 text-center md:text-left">
 

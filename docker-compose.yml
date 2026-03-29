@@ -1,4 +1,5 @@
 services:
+
   postgres:
     image: postgres:15
     container_name: rlfold-postgres
@@ -16,6 +17,7 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+
   redis:
     image: redis:7-alpine
     container_name: rlfold-redis
@@ -29,6 +31,7 @@ services:
       timeout: 3s
       retries: 5
     restart: unless-stopped
+
   backend:
     build:
       context: ./backend
@@ -52,6 +55,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
   worker:
     build:
       context: ./backend
@@ -71,24 +75,22 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      backend:
-        condition: service_started
     restart: unless-stopped
     command: celery -A app.core.celery_app worker --loglevel=info --concurrency=2
+
   flower:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: mher/flower:2.0
     container_name: rlfold-flower
     ports:
       - "5555:5555"
     environment:
-      REDIS_URL: redis://redis:6379
+      CELERY_BROKER_URL: redis://redis:6379/0
+      FLOWER_PORT: 5555
     depends_on:
-      - redis
-      - worker
+      redis:
+        condition: service_healthy
     restart: unless-stopped
-    command: celery -A app.core.celery_app flower --port=5555
+
   frontend:
     build:
       context: ./frontend
@@ -102,6 +104,7 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
