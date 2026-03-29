@@ -19,6 +19,8 @@ import { Label } from '@/components/ui/label'
 import { authApi } from '@/lib/api'
 import { useAppStore } from '@/store'
 import { toast } from "sonner"
+import Image from 'next/image'
+import LOGO from "../../../../public/logo/logo-single.svg"
 
 function LoginForm() {
   const router = useRouter()
@@ -76,14 +78,14 @@ function LoginForm() {
     <div className="min-h-screen flex flex-col md:flex-row bg-background text-text-primary">
       {/* Left Side: Form */}
       <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-6 lg:p-12 relative">
-        
+
         <Link href="/" className="flex flex-col justify-center items-center gap-4 mb-8 group">
-          <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center transition-transform group-hover:scale-105">
-            <Dna className="w-6 h-6 text-background" />
-          </div>
-          <span className="text-3xl font-bold tracking-tight text-text-primary">
-            RL-Fold
-          </span>
+          <Image
+            src={LOGO}
+            alt='logo'
+            height={70}
+            width={70}
+          />
         </Link>
         <div className='px-6 py-5 border rounded-xl'>
           <div className="w-full max-w-md relative z-10">
@@ -143,7 +145,7 @@ function LoginForm() {
               <Button type="submit" disabled={loading} size="lg" className="w-full h-12 mt-4 rounded-md cursor-pointer">
                 {loading ? (
                   <span className="flex items-center gap-2">
-                    <Loader2 className='h-4 w-4 animate-spin'/>
+                    <Loader2 className='h-4 w-4 animate-spin' />
                     Signing in...
                   </span>
                 ) : (
@@ -162,7 +164,7 @@ function LoginForm() {
               </Link>
             </div>
 
-         
+
           </div>
         </div>
       </div>
