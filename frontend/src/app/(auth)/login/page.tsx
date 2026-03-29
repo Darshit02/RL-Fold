@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -20,7 +20,7 @@ import { authApi } from '@/lib/api'
 import { useAppStore } from '@/store'
 import { toast } from "sonner"
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { setToken, setUser } = useAppStore()
@@ -86,7 +86,7 @@ export default function LoginPage() {
           </span>
         </Link>
         <div className='px-6 py-5 border rounded-xl'>
-          <div className="w-full max-w-md relative z-10">
+          <div className="w-full max-md relative z-10">
             {/* Header */}
             <div className="mb-10 text-center md:text-left">
 
@@ -215,3 +215,16 @@ export default function LoginPage() {
     </div>
   )
 }
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
