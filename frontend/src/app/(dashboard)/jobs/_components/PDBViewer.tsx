@@ -61,10 +61,10 @@ export default function PDBViewer({ jobId, plddt }: PDBViewerProps) {
                     viewer3d.current.clear()
                 }
                 const viewer = $3Dmol.createViewer(viewerRef.current, {
-                    backgroundColor: 'transparent',
                     antialias: true,
                     id: `viewer-${jobId}`,
                 })
+                viewer.setBackgroundColor(0xffffff, 0)
 
                 viewer3d.current = viewer
                 viewer.addModel(pdbData, 'pdb')
