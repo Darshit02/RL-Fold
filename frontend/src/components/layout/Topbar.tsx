@@ -11,7 +11,7 @@ interface TopbarProps {
 export default function Topbar({ title, subtitle, actions }: TopbarProps) {
   return (
     <div style={{
-      height: 65,
+      height: 70,
       borderBottom: '1px solid var(--border)',
       display: 'flex',
       alignItems: 'center',
