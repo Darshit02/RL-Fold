@@ -66,9 +66,9 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         subtitle={`Job ID: ${job.id}`}
         actions={
           job.status === 'completed' && (
-            <Button size="lg" variant="secondary" className="bg-secondary text-gray-300">
+            <Button size="lg" variant="secondary" className="flex items-center w-full justify-center bg-center bg-secondary text-gray-300 border border-border rounded-md">
               <a href={resultsApi.downloadUrl(job.id)} download>
-                <FileDownIcon className='h-14 w-14' />
+                {/* <FileDownIcon className='h-14 w-14' /> */}
                 Download PDB
               </a>
             </Button>

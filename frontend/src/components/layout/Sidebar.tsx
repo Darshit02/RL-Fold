@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAppStore } from '@/store'
+import Image from 'next/image'
+import LOGO from '../../../public/logo/logo.svg'
 
 const NAV = [
   {
@@ -73,34 +75,17 @@ export default function Sidebar() {
 
       {/* Logo */}
       <div style={{
-        padding: '18px 20px',
         borderBottom: '1px solid var(--border)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
           <div style={{
-            width: 28, height: 28, borderRadius: 7,
-            background: 'var(--accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
+           
           }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                stroke="#0a0a0a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <Image src={LOGO} alt="RL-Fold" width={200} height={200} />
           </div>
-          <span style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '16px',
-            fontWeight: 500,
-            color: 'var(--text-primary)',
-          }}>
-            RL-Fold
-          </span>
         </div>
-
       </div>
 
       {/* Nav */}
