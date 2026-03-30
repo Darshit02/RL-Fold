@@ -37,3 +37,7 @@ alembic/versions/*.pyc
 storage/
 outputs/
 logs/
+
+#cache
+cache/
+cache/*

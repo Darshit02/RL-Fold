@@ -69,6 +69,7 @@ services:
       DEBUG: "false"
     volumes:
       - ./backend:/app
+      - ./ml:/ml
       - storage_data:/app/storage
     depends_on:
       postgres:
