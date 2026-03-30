@@ -13,6 +13,8 @@ import { CircleFadingPlus, CircleX, Trash2 } from 'lucide-react'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { toast } from 'sonner'
 
+
+
 export default function JobsPage() {
   const router = useRouter()
   const { jobs, isLoading, mutate } = useJobs()
@@ -108,8 +110,6 @@ export default function JobsPage() {
       />
 
       <div style={{ padding: '28px', flex: 1 }}>
-
-        {/* Job submission form */}
         {showForm && (
           <div style={{
             border: '1px solid var(--border)',
@@ -187,8 +187,6 @@ export default function JobsPage() {
             </form>
           </div>
         )}
-
-        {/* Jobs table */}
         <div style={{
           border: '1px solid var(--border)',
           borderRadius: 10,

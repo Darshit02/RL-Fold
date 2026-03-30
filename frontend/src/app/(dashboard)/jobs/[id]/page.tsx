@@ -14,6 +14,22 @@ import {
   Tooltip, ResponsiveContainer, Legend
 } from 'recharts'
 import { FileDownIcon } from 'lucide-react'
+import dynamic from 'next/dynamic'
+
+const PDBViewer = dynamic(() => import('@/app/(dashboard)/jobs/_components/PDBViewer'), {
+  ssr: false,
+  loading: () => (
+    <div style={{
+      height: 420, display: 'flex', alignItems: 'center',
+      justifyContent: 'center', border: '1px solid var(--border)',
+      borderRadius: 10, background: 'var(--bg-surface)',
+    }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text-muted)' }}>
+        Loading viewer...
+      </span>
+    </div>
+  ),
+})
 
 export default function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -61,8 +77,6 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
       />
 
       <div style={{ padding: '28px', flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-        {/* Status + meta */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -83,8 +97,6 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
             Updated: {formatDate(job.updated_at)}
           </span>
         </div>
-
-        {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
           <StatCard
             label="pLDDT score"
@@ -109,8 +121,6 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
             accent
           />
         </div>
-
-        {/* Live reward chart */}
         <div style={{
           border: '1px solid var(--border)',
           borderRadius: 10,
@@ -183,7 +193,11 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
               </LineChart>
             </ResponsiveContainer>
           )}
+          {job.status === 'completed' && (
+            <PDBViewer jobId={job.id} plddt={job.plddt_score} />
+          )}
         </div>
+
 
         {/* Sequence viewer */}
         <div style={{
