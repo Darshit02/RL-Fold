@@ -54,7 +54,7 @@ const NAV = [
   }
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
   const { user, logout } = useAppStore()
 
@@ -81,7 +81,7 @@ export default function Sidebar() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
           <div style={{
-           
+
           }}>
             <Image src={LOGO} alt="RL-Fold" width={200} height={200} />
           </div>
@@ -106,6 +106,7 @@ export default function Sidebar() {
               const active = pathname === item.href
               return (
                 <Link
+                  onClick={() => onClose?.()}
                   key={item.href}
                   href={item.href}
                   style={{

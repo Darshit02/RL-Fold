@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import Image from 'next/image'
 import LOGO from "../../../public/logo/logo.svg"
+import { NewsletterForm } from './news-letter'
 
 const AA_CHARS = 'ACDEFGHIKLMNPQRSTVWY'
 
@@ -270,6 +271,155 @@ const FEATURES = [
   },
 ]
 
+const TEAM = [
+  {
+    name: 'Darshit',
+    role: 'ML Engineer & Founder',
+    bio: 'Built RL-Fold from scratch — RL pipeline, protein scoring, full-stack. Passionate about the intersection of AI and biology.',
+    initials: 'D',
+    links: { github: 'https://github.com', linkedin: 'https://linkedin.com' },
+  },
+]
+
+const FAQS = [
+  {
+    q: 'What is RL-Fold?',
+    a: 'RL-Fold is a reinforcement learning system for protein design. It trains a PPO agent with a graph neural network policy to navigate the vast space of amino acid sequences, guided by ESMFold structure prediction and PyRosetta thermodynamic scoring.',
+  },
+  {
+    q: 'Do I need a biology background to use it?',
+    a: 'No. You just need an amino acid sequence — a string of letters like MKTAYIAKQR. RL-Fold handles all the structural biology and scoring automatically. The dashboard shows results in plain terms: pLDDT confidence and energy score.',
+  },
+  {
+    q: 'How long does a design job take?',
+    a: 'In simulation mode, a 50-episode job takes about 30 seconds. With real ESMFold + PyRosetta on GPU, each episode takes 2-5 seconds — so 50 episodes runs in roughly 2-4 minutes.',
+  },
+  {
+    q: 'Is my sequence data private?',
+    a: 'Yes. Your sequences are stored only in your private database instance. We do not share, sell, or use your protein sequences for any purpose other than running your design jobs.',
+  },
+  {
+    q: 'Can I use my own protein structure as a target?',
+    a: 'Yes — the reward function supports RMSD-based scoring against a target PDB structure. Upload your target structure and the RL agent will optimise sequences that fold toward it.',
+  },
+  {
+    q: 'What is pLDDT and why does it matter?',
+    a: 'pLDDT (predicted Local Distance Difference Test) is a per-residue confidence score from ESMFold. Values above 70 indicate a well-folded, confident structure. It is the primary signal we use to evaluate whether a designed protein is likely to fold correctly.',
+  },
+]
+
+const ROADMAP = [
+  {
+    phase: 'Phase 1',
+    status: 'completed',
+    title: 'Core RL pipeline',
+    items: ['PPO agent + GNN policy', 'Gymnasium environment', 'Composite reward function', 'Celery async job queue'],
+  },
+  {
+    phase: 'Phase 2',
+    status: 'completed',
+    title: 'Full stack app',
+    items: ['FastAPI backend + JWT auth', 'Next.js dashboard', 'Live WebSocket metrics', '3D PDB structure viewer'],
+  },
+  {
+    phase: 'Phase 3',
+    status: 'active',
+    title: 'Real ML integration',
+    items: ['ESMFold structure prediction', 'PyRosetta REF15 scoring', 'RFDiffusion backbone generation', 'ProteinMPNN inverse folding'],
+  },
+  {
+    phase: 'Phase 4',
+    status: 'upcoming',
+    title: 'Advanced features',
+    items: ['Multi-objective optimization', 'Antibody design mode', 'Batch job processing', 'API access for researchers'],
+  },
+  {
+    phase: 'Phase 5',
+    status: 'upcoming',
+    title: 'Research platform',
+    items: ['Public benchmark datasets', 'Experiment sharing', 'Collaborative design', 'Paper-ready exports'],
+  },
+]
+
+const HOW_TO_USE = [
+  {
+    step: '01',
+    title: 'Paste your sequence',
+    body: 'Enter any amino acid sequence using single-letter codes. Use one of our example sequences or your own protein of interest.',
+    code: 'LSDEDFKAVFGMTRSAFANLPLWKQQNLKKEKGLF',
+  },
+  {
+    step: '02',
+    title: 'Choose a target property',
+    body: 'Select what you want to optimise for — thermostability, solubility, binding affinity, or general stability.',
+    code: 'target: thermostability',
+  },
+  {
+    step: '03',
+    title: 'Watch the agent learn',
+    body: 'The PPO agent runs 50 episodes, mutating residues and scoring each variant with ESMFold + PyRosetta. Watch the reward curve climb in real time.',
+    code: 'Episode 31 | pLDDT: 74.9 | reward: 0.741',
+  },
+  {
+    step: '04',
+    title: 'Download your structure',
+    body: 'When complete, download the optimised PDB file and view the 3D structure colored by pLDDT confidence — just like AlphaFold.',
+    code: 'output_job_a4f9.pdb → pLDDT: 82.4',
+  },
+]
+
+function FAQItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div
+      style={{
+        borderTop: '1px solid var(--border)',
+        cursor: 'pointer',
+      }}
+      onClick={() => setOpen(o => !o)}
+    >
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '20px 0',
+        gap: 16,
+      }}>
+        <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.4 }}>
+          {q}
+        </span>
+        <div style={{
+          width: 24, height: 24, borderRadius: '50%',
+          border: '1px solid var(--border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+          transition: 'transform 0.2s, border-color 0.15s',
+          transform: open ? 'rotate(45deg)' : 'none',
+          color: open ? 'var(--accent)' : 'var(--text-muted)',
+          borderColor: open ? 'var(--accent)' : 'var(--border)',
+        }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </div>
+      </div>
+      {open && (
+        <div style={{
+          fontSize: '13px',
+          color: 'var(--text-secondary)',
+          lineHeight: 1.7,
+          paddingBottom: 20,
+          maxWidth: 640,
+        }}>
+          {a}
+        </div>
+      )}
+    </div>
+  )
+}
+
+
+
 export default function LandingPage() {
   const statsRef = useRef<HTMLDivElement>(null)
   const [statsVisible, setStatsVisible] = useState(false)
@@ -319,23 +469,14 @@ export default function LandingPage() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* <ThemeToggle /> */}
-          <Link href="/login" className='cursor-pointer' style={{
-            color: 'var(--text-secondary)', textDecoration: 'none',
-            padding: '6px 14px', borderRadius: 6,
-            border: '1px solid var(--border)',
-            transition: 'border-color 0.15s',
-          }}
+          <Link href="/login" className='cursor-pointer font-medium px-2 py-1 text-md rounded-md' 
             onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-focus)')}
             onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
           >
             Sign in
           </Link>
-          <Link href="/register" className='cursor-pointer' style={{
-            color: 'var(--bg-base)', textDecoration: 'none',
-            padding: '6px 14px', borderRadius: 6,
-            background: 'var(--accent)',
-            transition: 'background 0.15s',
-          }}
+          <div className="">|</div>
+          <Link href="/register" className='cursor-pointer bg-primary font-medium px-2 py-1 text-md rounded-md'
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--accent-hover)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'var(--accent)')}
           >
@@ -571,6 +712,450 @@ export default function LandingPage() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+      {/* HOW TO USE */}
+      <section style={{ padding: '100px 80px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: '11px',
+            color: 'var(--accent)', letterSpacing: '0.12em', marginBottom: 16,
+          }}>
+            QUICK START
+          </div>
+          <h2 style={{
+            fontSize: 'clamp(28px, 3vw, 44px)', fontWeight: 500,
+            letterSpacing: '-0.02em', color: 'var(--text-primary)',
+            marginBottom: 64, lineHeight: 1.15, maxWidth: 480,
+          }}>
+            From sequence to structure in 4 steps.
+          </h2>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {HOW_TO_USE.map((step, i) => (
+              <div key={i} style={{
+                display: 'grid',
+                gridTemplateColumns: '80px 1fr 1fr',
+                gap: 40,
+                padding: '36px 0',
+                borderTop: '1px solid var(--border)',
+                alignItems: 'center',
+              }}>
+                <div style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '32px',
+                  fontWeight: 500,
+                  color: 'var(--border-focus)',
+                  lineHeight: 1,
+                }}>
+                  {step.step}
+                </div>
+                <div>
+                  <div style={{
+                    fontSize: '16px', fontWeight: 500,
+                    color: 'var(--text-primary)', marginBottom: 10,
+                  }}>
+                    {step.title}
+                  </div>
+                  <div style={{
+                    fontSize: '13px', color: 'var(--text-secondary)',
+                    lineHeight: 1.7,
+                  }}>
+                    {step.body}
+                  </div>
+                </div>
+                <div style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '12px',
+                  color: 'var(--accent)',
+                  background: 'var(--accent-dim)',
+                  border: '1px solid rgba(0,212,170,0.15)',
+                  borderRadius: 8,
+                  padding: '14px 18px',
+                  letterSpacing: '0.05em',
+                  wordBreak: 'break-all',
+                }}>
+                  {step.code}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TECH STACK */}
+      <section style={{
+        padding: '80px 80px',
+        borderBottom: '1px solid var(--border)',
+        background: 'var(--bg-surface)',
+      }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: '11px',
+            color: 'var(--accent)', letterSpacing: '0.12em', marginBottom: 40,
+            textAlign: 'center',
+          }}>
+            BUILT WITH
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: 1,
+            border: '1px solid var(--border)',
+            borderRadius: 12,
+            overflow: 'hidden',
+          }}>
+            {[
+              { name: 'PyTorch',          role: 'Deep learning',         color: '#ee4c2c' },
+              { name: 'Stable-Baselines3',role: 'PPO algorithm',          color: '#00d4aa' },
+              { name: 'ESMFold',          role: 'Structure prediction',   color: '#1877f2' },
+              { name: 'PyRosetta',        role: 'Energy scoring',         color: '#7c3aed' },
+              { name: 'FastAPI',          role: 'Backend API',            color: '#009688' },
+              { name: 'Next.js',          role: 'Frontend',               color: 'var(--text-primary)' },
+              { name: 'PostgreSQL',       role: 'Database',               color: '#336791' },
+              { name: 'Redis',            role: 'Queue + pub/sub',        color: '#dc382d' },
+              { name: 'Celery',           role: 'Task workers',           color: '#37b34a' },
+              { name: 'Docker',           role: 'Containerisation',       color: '#2496ed' },
+              { name: 'RFDiffusion',      role: 'Structure generation',   color: '#f59e0b' },
+              { name: 'Gymnasium',        role: 'RL environment',         color: '#00d4aa' },
+            ].map((tech, i) => (
+              <div key={i} style={{
+                padding: '20px 24px',
+                background: 'var(--bg-surface)',
+                borderRight: (i + 1) % 4 !== 0 ? '1px solid var(--border)' : 'none',
+                borderBottom: i < 8 ? '1px solid var(--border)' : 'none',
+                transition: 'background 0.15s',
+              }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-surface)')}
+              >
+                <div style={{
+                  fontSize: '13px', fontWeight: 500,
+                  color: tech.color,
+                  marginBottom: 4,
+                  fontFamily: 'var(--font-mono)',
+                }}>
+                  {tech.name}
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                  {tech.role}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ROADMAP */}
+      <section style={{ padding: '100px 80px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: '11px',
+            color: 'var(--accent)', letterSpacing: '0.12em', marginBottom: 16,
+          }}>
+            ROADMAP
+          </div>
+          <h2 style={{
+            fontSize: 'clamp(28px, 3vw, 44px)', fontWeight: 500,
+            letterSpacing: '-0.02em', color: 'var(--text-primary)',
+            marginBottom: 64, lineHeight: 1.15,
+          }}>
+            Where we are. Where we're going.
+          </h2>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {ROADMAP.map((phase, i) => (
+              <div key={i} style={{
+                display: 'grid',
+                gridTemplateColumns: '140px 1fr',
+                gap: 40,
+                padding: '28px 0',
+                borderTop: '1px solid var(--border)',
+                opacity: phase.status === 'upcoming' ? 0.5 : 1,
+                transition: 'opacity 0.15s',
+              }}>
+                <div>
+                  <div style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11px',
+                    color: 'var(--text-muted)',
+                    marginBottom: 6,
+                    letterSpacing: '0.08em',
+                  }}>
+                    {phase.phase}
+                  </div>
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    padding: '3px 8px',
+                    borderRadius: 20,
+                    fontSize: '10px',
+                    fontFamily: 'var(--font-mono)',
+                    background: phase.status === 'completed'
+                      ? 'rgba(16,185,129,0.1)'
+                      : phase.status === 'active'
+                      ? 'rgba(0,212,170,0.1)'
+                      : 'rgba(136,136,132,0.1)',
+                    color: phase.status === 'completed'
+                      ? '#10b981'
+                      : phase.status === 'active'
+                      ? 'var(--accent)'
+                      : 'var(--text-muted)',
+                  }}>
+                    <span style={{
+                      width: 5, height: 5, borderRadius: '50%',
+                      background: 'currentColor',
+                      display: 'inline-block',
+                      animation: phase.status === 'active' ? 'pulse-dot 1.5s infinite' : 'none',
+                    }}/>
+                    {phase.status === 'completed' ? 'Done' : phase.status === 'active' ? 'In progress' : 'Upcoming'}
+                  </div>
+                </div>
+                <div>
+                  <div style={{
+                    fontSize: '15px', fontWeight: 500,
+                    color: 'var(--text-primary)', marginBottom: 12,
+                  }}>
+                    {phase.title}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {phase.items.map((item, j) => (
+                      <span key={j} style={{
+                        fontSize: '11px',
+                        fontFamily: 'var(--font-mono)',
+                        color: 'var(--text-secondary)',
+                        background: 'var(--bg-elevated)',
+                        border: '1px solid var(--border)',
+                        padding: '4px 10px',
+                        borderRadius: 20,
+                      }}>
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TEAM */}
+      {/* <section style={{
+        padding: '100px 80px',
+        borderBottom: '1px solid var(--border)',
+        background: 'var(--bg-surface)',
+      }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: '11px',
+            color: 'var(--accent)', letterSpacing: '0.12em', marginBottom: 16,
+          }}>
+            THE TEAM
+          </div>
+          <h2 style={{
+            fontSize: 'clamp(28px, 3vw, 44px)', fontWeight: 500,
+            letterSpacing: '-0.02em', color: 'var(--text-primary)',
+            marginBottom: 64, lineHeight: 1.15,
+          }}>
+            Built by researchers,<br/>for researchers.
+          </h2>
+
+          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+            {TEAM.map((member, i) => (
+              <div key={i} style={{
+                flex: '1 1 280px',
+                padding: '28px',
+                border: '1px solid var(--border)',
+                borderRadius: 12,
+                background: 'var(--bg-base)',
+                transition: 'border-color 0.15s',
+              }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-focus)')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+              >
+                <div style={{
+                  width: 56, height: 56, borderRadius: '50%',
+                  background: 'var(--accent-dim)',
+                  border: '1px solid var(--accent)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '20px', fontWeight: 500,
+                  color: 'var(--accent)',
+                  marginBottom: 16,
+                }}>
+                  {member.initials}
+                </div>
+                <div style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: 4 }}>
+                  {member.name}
+                </div>
+                <div style={{
+                  fontSize: '11px', fontFamily: 'var(--font-mono)',
+                  color: 'var(--accent)', marginBottom: 12,
+                }}>
+                  {member.role}
+                </div>
+                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 20 }}>
+                  {member.bio}
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  {Object.entries(member.links).map(([platform, url]) => (
+                    <a key={platform} href={url} target="_blank" rel="noopener noreferrer" style={{
+                      fontSize: '11px',
+                      fontFamily: 'var(--font-mono)',
+                      color: 'var(--text-muted)',
+                      textDecoration: 'none',
+                      padding: '4px 10px',
+                      borderRadius: 6,
+                      border: '1px solid var(--border)',
+                      transition: 'color 0.15s, border-color 0.15s',
+                    }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.color = 'var(--accent)'
+                        e.currentTarget.style.borderColor = 'var(--accent)'
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.color = 'var(--text-muted)'
+                        e.currentTarget.style.borderColor = 'var(--border)'
+                      }}
+                    >
+                      {platform}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section> */}
+
+      {/* QUOTE */}
+      <section style={{
+        padding: '80px 80px',
+        borderBottom: '1px solid var(--border)',
+        background: 'var(--bg-surface)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <div style={{ maxWidth: 760, textAlign: 'center' }}>
+          <div style={{
+            fontSize: '11px',
+            fontFamily: 'var(--font-mono)',
+            color: 'var(--accent)',
+            letterSpacing: '0.12em',
+            marginBottom: 28,
+          }}>
+            THE MISSION
+          </div>
+
+          {/* Opening quote mark */}
+          <div style={{
+            fontSize: '80px',
+            lineHeight: 0.6,
+            color: 'var(--accent)',
+            fontFamily: 'Georgia, serif',
+            marginBottom: 24,
+            opacity: 0.4,
+          }}>
+            "
+          </div>
+
+          <blockquote style={{
+            fontSize: 'clamp(20px, 2.8vw, 32px)',
+            fontWeight: 400,
+            color: 'var(--text-primary)',
+            lineHeight: 1.5,
+            letterSpacing: '-0.02em',
+            margin: '0 0 32px 0',
+            fontStyle: 'italic',
+          }}>
+            If you can write the sequence,{' '}
+            <span style={{ color: 'var(--accent)', fontStyle: 'normal', fontWeight: 500 }}>
+              you can write the cure.
+            </span>{' '}
+            Protein design is not just biology — it is programming life itself.
+          </blockquote>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 14,
+          }}>
+            <div style={{
+              width: 32, height: 1,
+              background: 'var(--border)',
+            }} />
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              color: 'var(--text-muted)',
+              letterSpacing: '0.1em',
+            }}>
+              RL-FOLD MANIFESTO
+            </span>
+            <div style={{
+              width: 32, height: 1,
+              background: 'var(--border)',
+            }} />
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section style={{ padding: '100px 80px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: 720, margin: '0 auto' }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: '11px',
+            color: 'var(--accent)', letterSpacing: '0.12em', marginBottom: 16,
+          }}>
+            FAQ
+          </div>
+          <h2 style={{
+            fontSize: 'clamp(28px, 3vw, 44px)', fontWeight: 500,
+            letterSpacing: '-0.02em', color: 'var(--text-primary)',
+            marginBottom: 48, lineHeight: 1.15,
+          }}>
+            Everything you need to know.
+          </h2>
+          <div>
+            {FAQS.map((faq, i) => (
+              <FAQItem key={i} q={faq.q} a={faq.a} />
+            ))}
+            <div style={{ borderTop: '1px solid var(--border)' }} />
+          </div>
+        </div>
+      </section>
+
+      {/* NEWSLETTER */}
+      <section style={{
+        padding: '80px 80px',
+        borderBottom: '1px solid var(--border)',
+        background: 'var(--bg-surface)',
+      }}>
+        <div style={{ maxWidth: 560, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: '11px',
+            color: 'var(--accent)', letterSpacing: '0.12em', marginBottom: 16,
+          }}>
+            STAY UPDATED
+          </div>
+          <h2 style={{
+            fontSize: 'clamp(25px, 3vw, 35px)', fontWeight: 500,
+            letterSpacing: '0.12em', color: 'var(--text-primary)',
+            marginBottom: 12, lineHeight: 1.2,
+          }}>
+            Research updates, straight to your inbox.
+          </h2>
+          <p style={{
+            fontSize: '16px', color: 'var(--text-secondary)',
+            marginBottom: 32, lineHeight: 1.7,
+          }}>
+            Get notified when we ship real ESMFold integration, new design modes, and research results. No spam — ever.
+          </p>
+          <NewsletterForm />
         </div>
       </section>
       <section style={{
