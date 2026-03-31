@@ -219,3 +219,23 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 }
+
+/* ── Mobile responsive ── */
+@media (max-width: 768px) {
+  .sidebar-hidden { display: none !important; }
+  .mobile-full    { width: 100% !important; }
+  .grid-mobile-1  { grid-template-columns: 1fr !important; }
+  .grid-mobile-2  { grid-template-columns: 1fr 1fr !important; }
+  .padding-mobile { padding: 16px !important; }
+  .hide-mobile    { display: none !important; }
+}
+
+/* ── Page transitions ── */
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: pageIn 0.25s ease forwards;
+}
