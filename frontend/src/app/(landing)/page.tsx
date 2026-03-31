@@ -29,6 +29,22 @@ function useCountUp(target: number, duration = 2000, start = false) {
   return count
 }
 
+function useBreakpoint() {
+  const [width, setWidth] = useState(0)
+  useEffect(() => {
+    const update = () => setWidth(window.innerWidth)
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+  return {
+    isMobile: width > 0 && width < 640,
+    isTablet: width >= 640 && width < 1024,
+    isDesktop: width >= 1024,
+    width,
+  }
+}
+
 function HelixCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -67,19 +83,16 @@ function HelixCanvas() {
         const progress = i / points
         const opacity = Math.sin(progress * Math.PI) * 0.6 + 0.1
 
-        // Strand 1
         ctx.beginPath()
         ctx.arc(x1, y, 2.5, 0, Math.PI * 2)
         ctx.fillStyle = `rgba(16, 185, 129, ${opacity})`
         ctx.fill()
 
-        // Strand 2
         ctx.beginPath()
         ctx.arc(x2, y, 2.5, 0, Math.PI * 2)
         ctx.fillStyle = `rgba(52, 211, 153, ${opacity * 0.7})`
         ctx.fill()
 
-        // Connecting rungs every 5
         if (i % 5 === 0) {
           ctx.beginPath()
           ctx.moveTo(x1, y)
@@ -90,7 +103,6 @@ function HelixCanvas() {
         }
       }
 
-      // Floating particles
       for (let i = 0; i < 20; i++) {
         const px = (Math.sin(t * 0.3 + i * 1.5) * 0.5 + 0.5) * w
         const py = (Math.cos(t * 0.2 + i * 2.1) * 0.5 + 0.5) * h
@@ -208,13 +220,21 @@ function TerminalDemo() {
           rlfold — terminal
         </span>
       </div>
-      <div style={{ padding: '20px 24px', minHeight: 320, fontFamily: 'var(--font-mono)', fontSize: '12px', lineHeight: 1.8 }}>
+      <div style={{
+        padding: '20px 24px',
+        minHeight: 320,
+        fontFamily: 'var(--font-mono)',
+        fontSize: '12px',
+        lineHeight: 1.8,
+        overflowX: 'auto',
+      }}>
         {lines.map((line, i) => (
           <div key={i} style={{
             color: line.color || 'var(--text-secondary)',
             opacity: visible.includes(i) ? 1 : 0,
             transform: visible.includes(i) ? 'translateY(0)' : 'translateY(4px)',
             transition: 'opacity 0.3s, transform 0.3s',
+            whiteSpace: 'nowrap',
           }}>
             {line.text || '\u00A0'}
           </div>
@@ -418,11 +438,13 @@ function FAQItem({ q, a }: { q: string; a: string }) {
   )
 }
 
-
-
 export default function LandingPage() {
   const statsRef = useRef<HTMLDivElement>(null)
   const [statsVisible, setStatsVisible] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { isMobile, isTablet } = useBreakpoint()
+
+  const isMobileOrTablet = isMobile || isTablet
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -433,13 +455,30 @@ export default function LandingPage() {
     return () => observer.disconnect()
   }, [])
 
+  // Close mobile menu on resize to desktop
+  useEffect(() => {
+    if (!isMobileOrTablet) setMobileMenuOpen(false)
+  }, [isMobileOrTablet])
+
+  const sectionPadding = isMobile
+    ? '60px 20px'
+    : isTablet
+    ? '80px 40px'
+    : '100px 80px'
+
+  const sectionPaddingMd = isMobile
+    ? '40px 20px'
+    : isTablet
+    ? '60px 40px'
+    : '80px 80px'
+
   return (
     <div style={{ background: 'var(--bg-base)', minHeight: '100vh', overflowX: 'hidden' }}>
 
       {/* NAV */}
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        padding: '0 40px',
+        padding: isMobile ? '0 16px' : '0 40px',
         height: 56,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         borderBottom: '1px solid var(--border)',
@@ -447,52 +486,112 @@ export default function LandingPage() {
         backdropFilter: 'blur(12px)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-          <div style={{
-            
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-           <Image
-           src={LOGO}
-           alt='logo'
-           height={200}
-           width={200}
-           />
-          <span style={{
-            fontFamily: 'var(--font-mono)', fontSize: '10px',
-            color: 'var(--accent)', background: 'var(--accent-dim)',
-            padding: '2px 6px', borderRadius: 4, marginLeft: 4,
-          }}>
-            BETA
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Image src={LOGO} alt='logo' height={isMobile ? 140 : 200} width={isMobile ? 140 : 200} />
+            <span style={{
+              fontFamily: 'var(--font-mono)', fontSize: '10px',
+              color: 'var(--accent)', background: 'var(--accent-dim)',
+              padding: '2px 6px', borderRadius: 4, marginLeft: 4,
+            }}>
+              BETA
+            </span>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* <ThemeToggle /> */}
-          <Link href="/login" className='cursor-pointer font-medium px-2 py-1 text-md rounded-md' 
-            onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-focus)')}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+        {/* Desktop nav links */}
+        {!isMobileOrTablet && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Link href="/login" className='cursor-pointer font-medium px-2 py-1 text-md rounded-md'
+              onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-focus)')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+            >
+              Sign in
+            </Link>
+            <div>|</div>
+            <Link href="/register" className='cursor-pointer bg-primary font-medium px-2 py-1 text-md rounded-md'
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--accent-hover)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'var(--accent)')}
+            >
+              Get started
+            </Link>
+          </div>
+        )}
+
+        {/* Mobile/Tablet hamburger */}
+        {isMobileOrTablet && (
+          <button
+            onClick={() => setMobileMenuOpen(o => !o)}
+            style={{
+              background: 'none', border: '1px solid var(--border)',
+              borderRadius: 6, padding: '6px 8px', cursor: 'pointer',
+              display: 'flex', flexDirection: 'column', gap: 4,
+              color: 'var(--text-primary)',
+            }}
+            aria-label="Toggle menu"
           >
+            {mobileMenuOpen ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            )}
+          </button>
+        )}
+      </nav>
+
+      {/* Mobile dropdown menu */}
+      {isMobileOrTablet && mobileMenuOpen && (
+        <div style={{
+          position: 'fixed', top: 56, left: 0, right: 0, zIndex: 99,
+          background: 'var(--bg-base)',
+          borderBottom: '1px solid var(--border)',
+          padding: '16px 20px',
+          display: 'flex', flexDirection: 'column', gap: 12,
+          backdropFilter: 'blur(12px)',
+        }}>
+          <Link href="/login" onClick={() => setMobileMenuOpen(false)} style={{
+            fontSize: '14px', fontWeight: 500,
+            color: 'var(--text-primary)', textDecoration: 'none',
+            padding: '10px 0',
+            borderBottom: '1px solid var(--border)',
+          }}>
             Sign in
           </Link>
-          <div className="">|</div>
-          <Link href="/register" className='cursor-pointer bg-primary font-medium px-2 py-1 text-md rounded-md'
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--accent-hover)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'var(--accent)')}
-          >
+          <Link href="/register" onClick={() => setMobileMenuOpen(false)} style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            background: 'var(--accent)', color: '#0a0a0a',
+            padding: '12px 24px', borderRadius: 8,
+            textDecoration: 'none', fontSize: '14px', fontWeight: 500,
+          }}>
             Get started
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </Link>
         </div>
-      </nav>
+      )}
+
+      {/* HERO */}
       <section style={{
-        minHeight: '100vh', display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: 0, paddingTop: 56,
+        minHeight: '100vh',
+        display: 'grid',
+        gridTemplateColumns: isMobileOrTablet ? '1fr' : '1fr 1fr',
+        gap: 0,
+        paddingTop: 56,
       }}>
+        {/* Left / Content */}
         <div style={{
           display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: '80px 60px 80px 80px',
-          borderRight: '1px solid var(--border)',
+          padding: isMobile
+            ? '48px 20px 40px'
+            : isTablet
+            ? '60px 40px 48px'
+            : '80px 60px 80px 80px',
+          borderRight: isMobileOrTablet ? 'none' : '1px solid var(--border)',
+          borderBottom: isMobileOrTablet ? '1px solid var(--border)' : 'none',
         }}>
           <div className="fade-up" style={{ animationDelay: '0.1s', opacity: 0 }}>
             <div style={{
@@ -511,16 +610,16 @@ export default function LandingPage() {
 
           <h1 className="fade-up" style={{
             animationDelay: '0.2s', opacity: 0,
-            fontSize: 'clamp(40px, 4vw, 70px)',
+            fontSize: 'clamp(36px, 5vw, 70px)',
             fontWeight: 500, lineHeight: 1.08,
             letterSpacing: '-0.03em',
             color: 'var(--text-primary)',
             marginBottom: 24,
           }}>
-            Design  <span style={{ color: 'var(--accent)' }}> proteins {" "}
+            Design <span style={{ color: 'var(--accent)' }}> proteins{' '}
             </span>
             that
-            <span style={{ color: 'var(--accent)' }}> evolution</span>{" "}
+            <span style={{ color: 'var(--accent)' }}> evolution</span>{' '}
             never tried.
           </h1>
 
@@ -541,6 +640,7 @@ export default function LandingPage() {
               background: 'var(--accent)', color: '#0a0a0a',
               padding: '12px 24px', borderRadius: 8,
               textDecoration: 'none', transition: 'background 0.15s',
+              fontSize: '14px', fontWeight: 500,
             }}
               onMouseEnter={e => (e.currentTarget.style.background = 'var(--accent-hover)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'var(--accent)')}
@@ -575,70 +675,136 @@ export default function LandingPage() {
             <MorphingSequence />
           </div>
         </div>
-        <div style={{
-          position: 'relative',
-          background: 'var(--bg-surface)',
-          overflow: 'hidden',
-        }}>
+
+        {/* Right / Helix canvas — hidden on mobile, shown on tablet+ as banner */}
+        {!isMobile && (
           <div style={{
-            position: 'absolute', inset: 0,
-            background: 'radial-gradient(ellipse at 50% 50%, rgba(0,212,170,0.04) 0%, transparent 70%)',
-          }} />
-          <HelixCanvas />
-          <div className="fade-up" style={{
-            animationDelay: '0.6s', opacity: 0,
-            position: 'absolute', top: 80, right: 40,
-            background: 'var(--bg-elevated)',
-            border: '1px solid var(--border)',
-            borderRadius: 10, padding: '12px 16px',
-            fontFamily: 'var(--font-mono)',
+            position: 'relative',
+            background: 'var(--bg-surface)',
+            overflow: 'hidden',
+            minHeight: isTablet ? 360 : undefined,
           }}>
-            <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>pLDDT SCORE</div>
-            <div style={{ fontSize: '24px', color: 'var(--accent)', fontWeight: 500, marginTop: 2 }}>82.4</div>
-            <div style={{ fontSize: '10px', color: '#10b981', marginTop: 2 }}>↑ +95.7% from baseline</div>
-          </div>
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'radial-gradient(ellipse at 50% 50%, rgba(0,212,170,0.04) 0%, transparent 70%)',
+            }} />
+            <HelixCanvas />
 
-          <div className="fade-up" style={{
-            animationDelay: '0.8s', opacity: 0,
-            position: 'absolute', bottom: 120, left: 40,
-            background: 'var(--bg-elevated)',
-            border: '1px solid var(--border)',
-            borderRadius: 10, padding: '12px 16px',
-            fontFamily: 'var(--font-mono)',
-          }}>
-            <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>ROSETTA ENERGY</div>
-            <div style={{ fontSize: '24px', color: '#22d3ee', fontWeight: 500, marginTop: 2 }}>−134.8</div>
-            <div style={{ fontSize: '10px', color: '#10b981', marginTop: 2 }}>↓ REF15 score</div>
-          </div>
+            {/* Floating metric cards — hide on tablet to avoid overlap */}
+            {!isTablet && (
+              <>
+                <div className="fade-up" style={{
+                  animationDelay: '0.6s', opacity: 0,
+                  position: 'absolute', top: 80, right: 40,
+                  background: 'var(--bg-elevated)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 10, padding: '12px 16px',
+                  fontFamily: 'var(--font-mono)',
+                }}>
+                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>pLDDT SCORE</div>
+                  <div style={{ fontSize: '24px', color: 'var(--accent)', fontWeight: 500, marginTop: 2 }}>82.4</div>
+                  <div style={{ fontSize: '10px', color: '#10b981', marginTop: 2 }}>↑ +95.7% from baseline</div>
+                </div>
 
-          <div className="fade-up" style={{
-            animationDelay: '1s', opacity: 0,
-            position: 'absolute', bottom: 80, right: 40,
-            background: 'var(--bg-elevated)',
-            border: '1px solid var(--border)',
-            borderRadius: 10, padding: '12px 16px',
-            fontFamily: 'var(--font-mono)',
-          }}>
-            <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>EPISODE</div>
-            <div style={{ fontSize: '24px', color: 'var(--text-primary)', fontWeight: 500, marginTop: 2 }}>50/50</div>
-            <div style={{ fontSize: '10px', color: 'var(--accent)', marginTop: 2 }}>● completed</div>
+                <div className="fade-up" style={{
+                  animationDelay: '0.8s', opacity: 0,
+                  position: 'absolute', bottom: 120, left: 40,
+                  background: 'var(--bg-elevated)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 10, padding: '12px 16px',
+                  fontFamily: 'var(--font-mono)',
+                }}>
+                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>ROSETTA ENERGY</div>
+                  <div style={{ fontSize: '24px', color: '#22d3ee', fontWeight: 500, marginTop: 2 }}>−134.8</div>
+                  <div style={{ fontSize: '10px', color: '#10b981', marginTop: 2 }}>↓ REF15 score</div>
+                </div>
+
+                <div className="fade-up" style={{
+                  animationDelay: '1s', opacity: 0,
+                  position: 'absolute', bottom: 80, right: 40,
+                  background: 'var(--bg-elevated)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 10, padding: '12px 16px',
+                  fontFamily: 'var(--font-mono)',
+                }}>
+                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>EPISODE</div>
+                  <div style={{ fontSize: '24px', color: 'var(--text-primary)', fontWeight: 500, marginTop: 2 }}>50/50</div>
+                  <div style={{ fontSize: '10px', color: 'var(--accent)', marginTop: 2 }}>● completed</div>
+                </div>
+              </>
+            )}
+
+            {/* Tablet: show compact inline metrics row */}
+            {isTablet && (
+              <div style={{
+                position: 'absolute', bottom: 24, left: 16, right: 16,
+                display: 'flex', gap: 12, justifyContent: 'center',
+              }}>
+                {[
+                  { label: 'pLDDT', value: '82.4', sub: '↑ +95.7%', color: 'var(--accent)' },
+                  { label: 'ENERGY', value: '−134.8', sub: '↓ REF15', color: '#22d3ee' },
+                  { label: 'EPISODE', value: '50/50', sub: '● done', color: 'var(--text-primary)' },
+                ].map((m, i) => (
+                  <div key={i} style={{
+                    background: 'var(--bg-elevated)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 10, padding: '10px 14px',
+                    fontFamily: 'var(--font-mono)',
+                    flex: 1, maxWidth: 140,
+                  }}>
+                    <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{m.label}</div>
+                    <div style={{ fontSize: '18px', color: m.color, fontWeight: 500, marginTop: 2 }}>{m.value}</div>
+                    <div style={{ fontSize: '9px', color: '#10b981', marginTop: 2 }}>{m.sub}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
+        )}
+
+        {/* Mobile: show metric cards inline below hero text */}
+        {isMobile && (
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8,
+            padding: '0 20px 32px',
+          }}>
+            {[
+              { label: 'pLDDT', value: '82.4', sub: '↑ +95.7%', color: 'var(--accent)' },
+              { label: 'ENERGY', value: '−134', sub: '↓ REF15', color: '#22d3ee' },
+              { label: 'EP', value: '50/50', sub: '● done', color: 'var(--text-primary)' },
+            ].map((m, i) => (
+              <div key={i} style={{
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 10, padding: '10px 12px',
+                fontFamily: 'var(--font-mono)',
+              }}>
+                <div style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>{m.label}</div>
+                <div style={{ fontSize: '16px', color: m.color, fontWeight: 500, marginTop: 2 }}>{m.value}</div>
+                <div style={{ fontSize: '8px', color: '#10b981', marginTop: 2 }}>{m.sub}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
+
+      {/* STATS */}
       <section ref={statsRef} style={{
         borderTop: '1px solid var(--border)',
         borderBottom: '1px solid var(--border)',
-        padding: '60px 80px',
+        padding: isMobile ? '40px 20px' : isTablet ? '48px 40px' : '60px 80px',
         display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: 40,
+        gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+        gap: isMobile ? '32px 20px' : 40,
       }}>
         <StatCard value={20} suffix="+" label="Amino acids in action space" start={statsVisible} />
         <StatCard value={95} suffix="%" label="pLDDT improvement vs baseline" start={statsVisible} />
         <StatCard value={50} label="RL episodes per design job" start={statsVisible} />
         <StatCard value={3} label="Scoring models in reward fn" start={statsVisible} />
       </section>
-      <section style={{ padding: '100px 80px', borderBottom: '1px solid var(--border)' }}>
+
+      {/* LIVE DEMO */}
+      <section style={{ padding: sectionPadding, borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <div style={{
             fontFamily: 'var(--font-mono)', fontSize: '11px',
@@ -647,7 +813,7 @@ export default function LandingPage() {
             LIVE DEMO
           </div>
           <h2 style={{
-            fontSize: 'clamp(28px, 3vw, 44px)', fontWeight: 500,
+            fontSize: 'clamp(24px, 3vw, 44px)', fontWeight: 500,
             letterSpacing: '-0.02em', color: 'var(--text-primary)',
             marginBottom: 12, lineHeight: 1.15,
           }}>
@@ -662,17 +828,20 @@ export default function LandingPage() {
           <TerminalDemo />
         </div>
       </section>
-      <section style={{ padding: '100px 80px', borderBottom: '1px solid var(--border)' }}>
+
+      {/* HOW IT WORKS */}
+      <section style={{ padding: sectionPadding, borderBottom: '1px solid var(--border)' }}>
         <div style={{
           fontFamily: 'var(--font-mono)', fontSize: '11px',
           color: 'var(--accent)', letterSpacing: '0.12em', marginBottom: 16,
+          paddingLeft: isMobile ? 0 : undefined,
         }}>
           HOW IT WORKS
         </div>
         <h2 style={{
-          fontSize: 'clamp(28px, 3vw, 44px)', fontWeight: 500,
+          fontSize: 'clamp(24px, 3vw, 44px)', fontWeight: 500,
           letterSpacing: '-0.02em', color: 'var(--text-primary)',
-          marginBottom: 64, lineHeight: 1.15,
+          marginBottom: 48, lineHeight: 1.15,
         }}>
           Every component engineered for <br /> real science.
         </h2>
@@ -681,9 +850,9 @@ export default function LandingPage() {
           {FEATURES.map((f, i) => (
             <div key={i} style={{
               display: 'grid',
-              gridTemplateColumns: '120px 1fr',
-              gap: 40,
-              padding: '32px 25px',
+              gridTemplateColumns: isMobile ? '1fr' : '120px 1fr',
+              gap: isMobile ? 8 : 40,
+              padding: isMobile ? '24px 0' : '32px 25px',
               borderTop: '1px solid var(--border)',
               cursor: 'default',
               transition: 'background 0.15s',
@@ -694,13 +863,13 @@ export default function LandingPage() {
               <div style={{
                 fontFamily: 'var(--font-mono)', fontSize: '11px',
                 color: f.accent, letterSpacing: '0.1em',
-                paddingTop: 4,
+                paddingTop: isMobile ? 0 : 4,
               }}>
                 {f.tag}
               </div>
               <div>
                 <div style={{
-                  fontSize: '20px', fontWeight: 500,
+                  fontSize: '18px', fontWeight: 500,
                   color: 'var(--text-primary)', marginBottom: 8,
                   letterSpacing: '-0.01em',
                 }}>
@@ -714,8 +883,9 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
       {/* HOW TO USE */}
-      <section style={{ padding: '100px 80px', borderBottom: '1px solid var(--border)' }}>
+      <section style={{ padding: sectionPadding, borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <div style={{
             fontFamily: 'var(--font-mono)', fontSize: '11px',
@@ -724,9 +894,9 @@ export default function LandingPage() {
             QUICK START
           </div>
           <h2 style={{
-            fontSize: 'clamp(28px, 3vw, 44px)', fontWeight: 500,
+            fontSize: 'clamp(24px, 3vw, 44px)', fontWeight: 500,
             letterSpacing: '-0.02em', color: 'var(--text-primary)',
-            marginBottom: 64, lineHeight: 1.15, maxWidth: 480,
+            marginBottom: 48, lineHeight: 1.15, maxWidth: 480,
           }}>
             From sequence to structure in 4 steps.
           </h2>
@@ -735,15 +905,19 @@ export default function LandingPage() {
             {HOW_TO_USE.map((step, i) => (
               <div key={i} style={{
                 display: 'grid',
-                gridTemplateColumns: '80px 1fr 1fr',
-                gap: 40,
-                padding: '36px 0',
+                gridTemplateColumns: isMobile
+                  ? '1fr'
+                  : isTablet
+                  ? '64px 1fr'
+                  : '80px 1fr 1fr',
+                gap: isMobile ? 12 : isTablet ? 24 : 40,
+                padding: isMobile ? '24px 0' : '36px 0',
                 borderTop: '1px solid var(--border)',
-                alignItems: 'center',
+                alignItems: isMobile ? 'flex-start' : 'center',
               }}>
                 <div style={{
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '32px',
+                  fontSize: isMobile ? '24px' : '32px',
                   fontWeight: 500,
                   color: 'var(--border-focus)',
                   lineHeight: 1,
@@ -753,7 +927,7 @@ export default function LandingPage() {
                 <div>
                   <div style={{
                     fontSize: '16px', fontWeight: 500,
-                    color: 'var(--text-primary)', marginBottom: 10,
+                    color: 'var(--text-primary)', marginBottom: 8,
                   }}>
                     {step.title}
                   </div>
@@ -764,6 +938,7 @@ export default function LandingPage() {
                     {step.body}
                   </div>
                 </div>
+                {/* Code block — always shown, stacks below on mobile/tablet */}
                 <div style={{
                   fontFamily: 'var(--font-mono)',
                   fontSize: '12px',
@@ -774,6 +949,7 @@ export default function LandingPage() {
                   padding: '14px 18px',
                   letterSpacing: '0.05em',
                   wordBreak: 'break-all',
+                  gridColumn: isMobile ? '1' : undefined,
                 }}>
                   {step.code}
                 </div>
@@ -785,7 +961,7 @@ export default function LandingPage() {
 
       {/* TECH STACK */}
       <section style={{
-        padding: '80px 80px',
+        padding: sectionPaddingMd,
         borderBottom: '1px solid var(--border)',
         background: 'var(--bg-surface)',
       }}>
@@ -799,7 +975,7 @@ export default function LandingPage() {
           </div>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
+            gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : isTablet ? 'repeat(3, 1fr)' : 'repeat(4, 1fr)',
             gap: 1,
             border: '1px solid var(--border)',
             borderRadius: 12,
@@ -818,36 +994,42 @@ export default function LandingPage() {
               { name: 'Docker',           role: 'Containerisation',       color: '#2496ed' },
               { name: 'RFDiffusion',      role: 'Structure generation',   color: '#f59e0b' },
               { name: 'Gymnasium',        role: 'RL environment',         color: '#00d4aa' },
-            ].map((tech, i) => (
-              <div key={i} style={{
-                padding: '20px 24px',
-                background: 'var(--bg-surface)',
-                borderRight: (i + 1) % 4 !== 0 ? '1px solid var(--border)' : 'none',
-                borderBottom: i < 8 ? '1px solid var(--border)' : 'none',
-                transition: 'background 0.15s',
-              }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-surface)')}
-              >
-                <div style={{
-                  fontSize: '13px', fontWeight: 500,
-                  color: tech.color,
-                  marginBottom: 4,
-                  fontFamily: 'var(--font-mono)',
-                }}>
-                  {tech.name}
+            ].map((tech, i) => {
+              const cols = isMobile ? 2 : isTablet ? 3 : 4
+              const total = 12
+              const isLastRow = i >= total - (total % cols || cols)
+              const isRightEdge = (i + 1) % cols === 0
+              return (
+                <div key={i} style={{
+                  padding: '20px 24px',
+                  background: 'var(--bg-surface)',
+                  borderRight: !isRightEdge ? '1px solid var(--border)' : 'none',
+                  borderBottom: !isLastRow ? '1px solid var(--border)' : 'none',
+                  transition: 'background 0.15s',
+                }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-surface)')}
+                >
+                  <div style={{
+                    fontSize: '13px', fontWeight: 500,
+                    color: tech.color,
+                    marginBottom: 4,
+                    fontFamily: 'var(--font-mono)',
+                  }}>
+                    {tech.name}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    {tech.role}
+                  </div>
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                  {tech.role}
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>
 
       {/* ROADMAP */}
-      <section style={{ padding: '100px 80px', borderBottom: '1px solid var(--border)' }}>
+      <section style={{ padding: sectionPadding, borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <div style={{
             fontFamily: 'var(--font-mono)', fontSize: '11px',
@@ -856,9 +1038,9 @@ export default function LandingPage() {
             ROADMAP
           </div>
           <h2 style={{
-            fontSize: 'clamp(28px, 3vw, 44px)', fontWeight: 500,
+            fontSize: 'clamp(24px, 3vw, 44px)', fontWeight: 500,
             letterSpacing: '-0.02em', color: 'var(--text-primary)',
-            marginBottom: 64, lineHeight: 1.15,
+            marginBottom: 48, lineHeight: 1.15,
           }}>
             Where we are. Where we're going.
           </h2>
@@ -867,9 +1049,9 @@ export default function LandingPage() {
             {ROADMAP.map((phase, i) => (
               <div key={i} style={{
                 display: 'grid',
-                gridTemplateColumns: '140px 1fr',
-                gap: 40,
-                padding: '28px 0',
+                gridTemplateColumns: isMobile ? '1fr' : '140px 1fr',
+                gap: isMobile ? 12 : 40,
+                padding: isMobile ? '20px 0' : '28px 0',
                 borderTop: '1px solid var(--border)',
                 opacity: phase.status === 'upcoming' ? 0.5 : 1,
                 transition: 'opacity 0.15s',
@@ -941,98 +1123,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* TEAM */}
-      {/* <section style={{
-        padding: '100px 80px',
-        borderBottom: '1px solid var(--border)',
-        background: 'var(--bg-surface)',
-      }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: '11px',
-            color: 'var(--accent)', letterSpacing: '0.12em', marginBottom: 16,
-          }}>
-            THE TEAM
-          </div>
-          <h2 style={{
-            fontSize: 'clamp(28px, 3vw, 44px)', fontWeight: 500,
-            letterSpacing: '-0.02em', color: 'var(--text-primary)',
-            marginBottom: 64, lineHeight: 1.15,
-          }}>
-            Built by researchers,<br/>for researchers.
-          </h2>
-
-          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-            {TEAM.map((member, i) => (
-              <div key={i} style={{
-                flex: '1 1 280px',
-                padding: '28px',
-                border: '1px solid var(--border)',
-                borderRadius: 12,
-                background: 'var(--bg-base)',
-                transition: 'border-color 0.15s',
-              }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-focus)')}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
-              >
-                <div style={{
-                  width: 56, height: 56, borderRadius: '50%',
-                  background: 'var(--accent-dim)',
-                  border: '1px solid var(--accent)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '20px', fontWeight: 500,
-                  color: 'var(--accent)',
-                  marginBottom: 16,
-                }}>
-                  {member.initials}
-                </div>
-                <div style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: 4 }}>
-                  {member.name}
-                </div>
-                <div style={{
-                  fontSize: '11px', fontFamily: 'var(--font-mono)',
-                  color: 'var(--accent)', marginBottom: 12,
-                }}>
-                  {member.role}
-                </div>
-                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 20 }}>
-                  {member.bio}
-                </div>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  {Object.entries(member.links).map(([platform, url]) => (
-                    <a key={platform} href={url} target="_blank" rel="noopener noreferrer" style={{
-                      fontSize: '11px',
-                      fontFamily: 'var(--font-mono)',
-                      color: 'var(--text-muted)',
-                      textDecoration: 'none',
-                      padding: '4px 10px',
-                      borderRadius: 6,
-                      border: '1px solid var(--border)',
-                      transition: 'color 0.15s, border-color 0.15s',
-                    }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.color = 'var(--accent)'
-                        e.currentTarget.style.borderColor = 'var(--accent)'
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.color = 'var(--text-muted)'
-                        e.currentTarget.style.borderColor = 'var(--border)'
-                      }}
-                    >
-                      {platform}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section> */}
-
       {/* QUOTE */}
       <section style={{
-        padding: '80px 80px',
+        padding: isMobile ? '60px 20px' : sectionPaddingMd,
         borderBottom: '1px solid var(--border)',
         background: 'var(--bg-surface)',
         display: 'flex',
@@ -1050,9 +1143,8 @@ export default function LandingPage() {
             THE MISSION
           </div>
 
-          {/* Opening quote mark */}
           <div style={{
-            fontSize: '80px',
+            fontSize: isMobile ? '60px' : '80px',
             lineHeight: 0.6,
             color: 'var(--accent)',
             fontFamily: 'Georgia, serif',
@@ -1063,7 +1155,7 @@ export default function LandingPage() {
           </div>
 
           <blockquote style={{
-            fontSize: 'clamp(20px, 2.8vw, 32px)',
+            fontSize: 'clamp(18px, 3vw, 32px)',
             fontWeight: 400,
             color: 'var(--text-primary)',
             lineHeight: 1.5,
@@ -1084,10 +1176,7 @@ export default function LandingPage() {
             justifyContent: 'center',
             gap: 14,
           }}>
-            <div style={{
-              width: 32, height: 1,
-              background: 'var(--border)',
-            }} />
+            <div style={{ width: 32, height: 1, background: 'var(--border)' }} />
             <span style={{
               fontFamily: 'var(--font-mono)',
               fontSize: '11px',
@@ -1096,16 +1185,13 @@ export default function LandingPage() {
             }}>
               RL-FOLD MANIFESTO
             </span>
-            <div style={{
-              width: 32, height: 1,
-              background: 'var(--border)',
-            }} />
+            <div style={{ width: 32, height: 1, background: 'var(--border)' }} />
           </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section style={{ padding: '100px 80px', borderBottom: '1px solid var(--border)' }}>
+      <section style={{ padding: sectionPadding, borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
           <div style={{
             fontFamily: 'var(--font-mono)', fontSize: '11px',
@@ -1114,7 +1200,7 @@ export default function LandingPage() {
             FAQ
           </div>
           <h2 style={{
-            fontSize: 'clamp(28px, 3vw, 44px)', fontWeight: 500,
+            fontSize: 'clamp(24px, 3vw, 44px)', fontWeight: 500,
             letterSpacing: '-0.02em', color: 'var(--text-primary)',
             marginBottom: 48, lineHeight: 1.15,
           }}>
@@ -1131,7 +1217,7 @@ export default function LandingPage() {
 
       {/* NEWSLETTER */}
       <section style={{
-        padding: '80px 80px',
+        padding: sectionPaddingMd,
         borderBottom: '1px solid var(--border)',
         background: 'var(--bg-surface)',
       }}>
@@ -1143,14 +1229,14 @@ export default function LandingPage() {
             STAY UPDATED
           </div>
           <h2 style={{
-            fontSize: 'clamp(25px, 3vw, 35px)', fontWeight: 500,
+            fontSize: 'clamp(20px, 3vw, 35px)', fontWeight: 500,
             letterSpacing: '0.12em', color: 'var(--text-primary)',
             marginBottom: 12, lineHeight: 1.2,
           }}>
             Research updates, straight to your inbox.
           </h2>
           <p style={{
-            fontSize: '16px', color: 'var(--text-secondary)',
+            fontSize: '15px', color: 'var(--text-secondary)',
             marginBottom: 32, lineHeight: 1.7,
           }}>
             Get notified when we ship real ESMFold integration, new design modes, and research results. No spam — ever.
@@ -1158,8 +1244,10 @@ export default function LandingPage() {
           <NewsletterForm />
         </div>
       </section>
+
+      {/* CTA */}
       <section style={{
-        padding: '120px 80px',
+        padding: isMobile ? '80px 20px' : '120px 80px',
         textAlign: 'center',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
       }}>
@@ -1170,7 +1258,7 @@ export default function LandingPage() {
           GET STARTED FREE
         </div>
         <h2 style={{
-          fontSize: 'clamp(32px, 4vw, 56px)', fontWeight: 500,
+          fontSize: 'clamp(28px, 4vw, 56px)', fontWeight: 500,
           letterSpacing: '-0.03em', color: 'var(--text-primary)',
           lineHeight: 1.1, marginBottom: 20, maxWidth: 600,
         }}>
@@ -1199,25 +1287,13 @@ export default function LandingPage() {
           </svg>
         </Link>
 
-        <div style={{
-          marginTop: 80, paddingTop: 40,
-          borderTop: '1px solid var(--border)',
-          width: '100%', maxWidth: 600,
-          display: 'flex', justifyContent: 'center', gap: 32,
-        }}>
-          {['Privacy Policy', 'Terms of Service', 'Documentation', 'GitHub'].map(item => (
-            <span key={item} style={{
-              fontFamily: 'var(--font-mono)', fontSize: '11px',
-              color: 'var(--text-muted)', cursor: 'pointer',
-              transition: 'color 0.15s',
-            }}
-              onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
-            >
-              {item}
-            </span>
-          ))}
-        </div>
+        
+      </section>
+      <section className="text-center my-12" style={{
+          fontFamily: 'var(--font-mono)', fontSize: '11px',
+          color: 'var(--accent)', letterSpacing: '0.12em', marginBottom: 24,
+        }}> 
+        Created by LAZY
       </section>
 
     </div>
