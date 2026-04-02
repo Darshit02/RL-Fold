@@ -2,18 +2,21 @@ import { cn } from '@/lib/utils'
 
 interface SkeletonProps {
   className?: string
-  width?:  string | number
+  width?: string | number
   height?: string | number
+  borderRadius?: number
+  style?: React.CSSProperties
 }
 
-export function Skeleton({ className, width, height }: SkeletonProps) {
+export function Skeleton({ className, width, height, borderRadius, style }: SkeletonProps) {
   return (
     <div
       className={cn('skeleton', className)}
       style={{
-        width:  width  ?? '100%',
+        width: width ?? '100%',
         height: height ?? 16,
-        borderRadius: 6,
+        borderRadius: borderRadius ?? 6,
+        ...style,
       }}
     />
   )

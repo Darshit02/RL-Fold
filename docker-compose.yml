@@ -35,9 +35,8 @@ services:
 
   backend:
     build:
-      context: .  # Project root
+      context: .
       dockerfile: backend/Dockerfile
-      # Remove registry cache for local development
     container_name: rlfold-backend
     ports:
       - "8000:8000"
@@ -49,6 +48,7 @@ services:
       DEBUG: "false"
     volumes:
       - ./backend:/app
+      - ./ml:/app/ml
       - storage_data:/app/storage
     depends_on:
       postgres:
@@ -72,7 +72,7 @@ services:
       DEBUG: "false"
     volumes:
       - ./backend:/app
-      - ./ml:/ml
+      - ./ml:/app/ml
       - storage_data:/app/storage
     depends_on:
       postgres:

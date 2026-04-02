@@ -58,13 +58,10 @@ def run_rl_job(self, job_id: str, sequence: str, target_property: str):
     update_job_status(job_id, 'running')
 
     try:
-        # Add ml/ directory to Python path
-        ml_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'ml')
-        ml_path = os.path.abspath(ml_path)
-        if ml_path not in sys.path:
-            sys.path.insert(0, ml_path)
-
-        # Import and run training
+        # Add project root to Python path
+        root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+        if root_path not in sys.path:
+            sys.path.insert(0, root_path)
         from ml.train import train
 
         result = train(
@@ -75,8 +72,6 @@ def run_rl_job(self, job_id: str, sequence: str, target_property: str):
             save_path       = settings.STORAGE_PATH,
             verbose         = False,
         )
-
-        # Update DB with final results
         update_job_status(
             job_id         = job_id,
             status         = 'completed',

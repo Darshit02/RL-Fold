@@ -8,6 +8,19 @@ Usage:
 """
 
 import os
+import sys
+import argparse
+import json
+import time
+import redis
+
+# Add parent directory to sys.path so 'ml' package is found when run directly
+if __name__ == "__main__":
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(current_dir)
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
+
 from ml.agents.gnn_policy import make_policy_kwargs
 from ml.rewards.rewards_fn import RewardFunction
 from ml.utils.pyrosetta_scorer import PyRosettaScorer
@@ -15,10 +28,6 @@ from ml.utils.esmfold import ESMFoldWrapper
 from ml.envs.protein_env import ProteinDesignEnv
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3 import PPO
-import argparse
-import json
-import time
-import redis
 
 
 REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379')

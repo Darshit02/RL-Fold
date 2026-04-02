@@ -8,13 +8,14 @@ RUN apt-get update && apt-get install -y \
 
 FROM base AS builder
 COPY backend/requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip pip install --no-cache-dir --user -r requirements.txt
 
 FROM base AS final
 WORKDIR /app
 COPY --from=builder /root/.local /root/.local
 ENV PATH=/root/.local/bin:$PATH
+ENV PYTHONPATH="/app"
 COPY backend . 
-COPY ml /ml
+COPY ml ml/
 RUN mkdir -p storage/structures storage/checkpoints cache/esmfold
 EXPOSE 8000
