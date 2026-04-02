@@ -23,7 +23,7 @@ reward:
   solubility_weight: 0.10
   plddt_threshold: 70.0
 
-taining:
+training:
   total_timesteps: 100000
   eval_freq: 5000
   save_freq: 10000
