@@ -1,291 +1,291 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Topbar from '@/components/layout/Topbar'
-import { StatusBadge } from '@/components/shared/Badge'
+import { StatusBadge } from '@/components/ui/badge'
+
+import { FilterBar } from '@/components/jobs/FilterBar'
+import { SortHeader } from '@/components/jobs/SortHeader'
+import { CompareSelector } from '@/components/jobs/CompareSelector'
+import { JobSubmitDialog } from '@/components/jobs/JobSubmitDialog'
+import { EmptyState } from '@/components/shared/EmptyState'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { useJobs } from '@/hooks/useJobs'
+import { useJobFilters, SortKey } from '@/hooks/useJobFilters'
 import { jobsApi } from '@/lib/api'
 import { formatDate, truncate } from '@/lib/utils'
-import { CircleFadingPlus, CircleX, Trash2 } from 'lucide-react'
+import { Sparkline } from '@/components/shared/Sparkline'
+import { CircleFadingPlus, Trash2Icon } from 'lucide-react'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
-import { toast } from 'sonner'
 
-
-
-export default function JobsPage() {
+export default function JobsV2Page() {
   const router = useRouter()
   const { jobs, isLoading, mutate } = useJobs()
-  const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ name: '', sequence: '', target_property: 'thermostability' })
-  const [submitting, setSubmitting] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const { filters, filtered, update, reset, toggleSort } = useJobFilters(jobs)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [selected, setSelected] = useState<string[]>([])
+  const [deleting, setDeleting] = useState<string | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [jobToDelete, setJobToDelete] = useState<string | null>(null)
 
-  function validate() {
-    const e: Record<string, string> = {}
-    if (!form.name) e.name = 'Job name is required'
-    if (!form.sequence) e.sequence = 'Sequence is required'
-    else if (!/^[ACDEFGHIKLMNPQRSTVWY]+$/i.test(form.sequence)) e.sequence = 'Invalid amino acid sequence'
-    else if (form.sequence.length < 5) e.sequence = 'Sequence too short (min 5 residues)'
-    return e
-  }
+  const toggleSelect = useCallback((id: string) => {
+    setSelected(s =>
+      s.includes(id)
+        ? s.filter(x => x !== id)
+        : s.length < 4 ? [...s, id] : s
+    )
+  }, [])
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const errs = validate()
-    if (Object.keys(errs).length) { setErrors(errs); return }
-    setSubmitting(true)
-    try {
-      const res = await jobsApi.create({
-        name: form.name,
-        sequence: form.sequence.toUpperCase(),
-        target_property: form.target_property,
-      })
-      await mutate()
-      toast.success('Job submitted successfully')
-      setShowForm(false)
-      setForm({ name: '', sequence: '', target_property: 'thermostability' })
-      router.push(`/jobs/${res.data.id}`)
-    } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Failed to create job'
-      setErrors({ submit: msg })
-      toast.error(msg)
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  async function handleDelete(id: string, e: React.MouseEvent) {
+  async function handleDeleteClick(id: string, e: React.MouseEvent) {
     e.stopPropagation()
     setJobToDelete(id)
     setDeleteConfirmOpen(true)
   }
 
-  async function confirmDelete() {
+  async function handleConfirmDelete() {
     if (!jobToDelete) return
+    const id = jobToDelete
+    setDeleting(id)
     try {
-      await jobsApi.delete(jobToDelete)
+      await jobsApi.delete(id)
       await mutate()
-      toast.success('Job deleted successfully')
-    } catch (err) {
-      toast.error('Failed to delete job')
+      setSelected(s => s.filter(x => x !== id))
     } finally {
+      setDeleting(null)
       setJobToDelete(null)
     }
   }
 
+  const STATIC_HEADERS: { label: string; key?: SortKey }[] = [
+    { label: '' },
+    { label: 'NAME', key: 'name' },
+    { label: 'STATUS' },
+    { label: 'TARGET' },
+    { label: 'pLDDT', key: 'plddt_score' },
+    { label: 'ENERGY', key: 'rosetta_energy' },
+    { label: 'TREND' },
+    { label: 'CREATED', key: 'created_at' },
+    { label: '' },
+  ]
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-      <ConfirmDialog
-        open={deleteConfirmOpen}
-        onOpenChange={setDeleteConfirmOpen}
-        onConfirm={confirmDelete}
-        title="Delete Job"
-        description="Are you sure you want to delete this design job? This action cannot be undone."
-        confirmText="Delete"
-        variant="destructive"
-      />
       <Topbar
-        title="Design Jobs"
-        subtitle={`${jobs.length} total jobs`}
+        title="Design jobs"
+        subtitle={`${jobs.length} total · ${jobs.filter(j => j.status === 'running').length} running`}
         actions={
-          <Button size="lg" className="cursor-pointer" onClick={() => setShowForm(s => !s)}>
-            {showForm ? (
-              <>
-                <CircleX className='h-14 w-14' />
-                Cancel
-              </>
-            ) : (
-              <>
-                <CircleFadingPlus className='h-14 w-14' />
-                New job
-              </>
-            )}
+          <Button size="sm" onClick={() => setDialogOpen(true)} className="p-4 cursor-pointer flex justify-center items-center">
+            <CircleFadingPlus className='h-4 w-4' />
+            New job
           </Button>
         }
       />
 
-      <div style={{ padding: '28px', flex: 1 }}>
-        {showForm && (
-          <div style={{
-            border: '1px solid var(--border)',
-            borderRadius: 10,
-            background: 'var(--bg-surface)',
-            padding: '24px',
-            marginBottom: 24,
-            animation: 'fadeUp 0.2s ease',
-          }}>
-            <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: 20 }}>
-              Submit new protein design job
-            </div>
-            <form onSubmit={handleSubmit}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-                <Input
-                  label="JOB NAME"
-                  placeholder="e.g. thermostable-variant-1"
-                  value={form.name}
-                  error={errors.name}
-                  className='h-10 rounded-md'
-                  onChange={e => { setForm(p => ({ ...p, name: e.target.value })); setErrors(p => ({ ...p, name: '' })) }}
-                />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ color: 'var(--text-secondary)', fontSize: '10px', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>
-                    TARGET PROPERTY
-                  </label>
-                  <select
-                    value={form.target_property}
-                    onChange={e => setForm(p => ({ ...p, target_property: e.target.value }))}
-                    style={{
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid var(--border)',
-                      background: 'var(--bg-elevated)',
-                      color: 'var(--text-primary)',
-                      fontSize: '12px',
-                      fontFamily: 'var(--font-mono)',
-                      outline: 'none',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <option value="thermostability">Thermostability</option>
-                    <option value="solubility">Solubility</option>
-                    <option value="binding_affinity">Binding affinity</option>
-                    <option value="stability">General stability</option>
-                  </select>
-                </div>
-              </div>
-              <div style={{ marginBottom: 16 }}>
-                <Input
-                  label="AMINO ACID SEQUENCE"
-                  placeholder="MKTAYIAKQRQISFVKSHFSRQLEERLGLIEVQAPIL..."
-                  value={form.sequence}
-                  error={errors.sequence}
-                  className='h-10 rounded-md'
-                  onChange={e => { setForm(p => ({ ...p, sequence: e.target.value.toUpperCase() })); setErrors(p => ({ ...p, sequence: '' })) }}
-                />
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: 4, fontFamily: 'var(--font-mono)' }}>
-                  {form.sequence.length} residues — use single-letter amino acid codes (A, C, D, E, F, G, H, I, K, L, M, N, P, Q, R, S, T, V, W, Y)
-                </div>
-              </div>
-              {errors.submit && (
-                <div style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(255,77,77,0.08)', border: '1px solid rgba(255,77,77,0.2)', color: 'var(--red)', fontSize: '12px', fontFamily: 'var(--font-mono)', marginBottom: 16 }}>
-                  {errors.submit}
-                </div>
-              )}
-              <div style={{ display: 'flex', gap: 10 }} className='justify-end items-end'>
-                <Button type="submit" isLoading={submitting} className="bg-accent cursor-pointer rounded-md px-4 py-1">
-                  {submitting ? 'Submitting...' : 'Submit job'}
-                </Button>
-                <Button type="button" className="bg-secondary text-gray-100 cursor-pointer rounded-md" onClick={() => setShowForm(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </div>
-        )}
+      <FilterBar
+        filters={filters}
+        onUpdate={update}
+        onReset={reset}
+        totalCount={jobs.length}
+        filteredCount={filtered.length}
+      />
+
+      <div style={{ flex: 1, overflow: 'auto', padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{
           border: '1px solid var(--border)',
-          borderRadius: 10,
+          borderRadius: 8,
           background: 'var(--bg-surface)',
           overflow: 'hidden',
         }}>
           {isLoading ? (
-            <div style={{ padding: 48, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text-muted)' }}>
-              Loading...
+            <div style={{ padding: '48px', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text-muted)' }}>
+              Loading jobs...
             </div>
-          ) : jobs.length === 0 ? (
-            <div style={{ padding: '64px 20px', textAlign: 'center' }}>
-              <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: 20 }}>
-                No jobs yet. Submit your first protein design job.
-              </div>
-              {/* <Button size="sm" onClick={() => setShowForm(true)}>Submit first job</Button> */}
-            </div>
+          ) : filtered.length === 0 ? (
+            <EmptyState
+              title={jobs.length === 0 ? 'No jobs yet' : 'No jobs match filters'}
+              description={jobs.length === 0
+                ? 'Submit your first protein design job to start the RL optimization loop.'
+                : 'Try adjusting your search or filter criteria.'
+              }
+              action={jobs.length === 0
+                ? { label: 'Submit first job', onClick: () => setDialogOpen(true) }
+                : { label: 'Reset filters', onClick: reset }
+              }
+              icon={
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"
+                    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              }
+            />
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  {['Name', 'Sequence', 'Target', 'Status', 'pLDDT', 'Energy', 'Created', ''].map(h => (
-                    <th key={h} style={{
-                      padding: '10px 16px',
-                      textAlign: 'left',
-                      fontSize: '11px',
-                      fontFamily: 'var(--font-mono)',
-                      color: 'var(--text-muted)',
-                      letterSpacing: '0.06em',
-                      fontWeight: 400,
-                    }}>
-                      {h}
-                    </th>
+                  <th style={{ padding: '9px 14px', width: 36 }}>
+                    <input
+                      type="checkbox"
+                      checked={selected.length === filtered.length && filtered.length > 0}
+                      onChange={e => setSelected(e.target.checked ? filtered.map(j => j.id) : [])}
+                      style={{ cursor: 'pointer', accentColor: 'var(--accent)' }}
+                    />
+                  </th>
+                  {STATIC_HEADERS.slice(1).map((h, i) => (
+                    h.key ? (
+                      <SortHeader
+                        key={h.label}
+                        label={h.label}
+                        sortKey={h.key}
+                        current={filters.sortKey}
+                        dir={filters.sortDir}
+                        onClick={toggleSort}
+                      />
+                    ) : (
+                      <th key={i} style={{
+                        padding: '9px 14px',
+                        textAlign: 'left',
+                        fontSize: '10px',
+                        fontFamily: 'var(--font-mono)',
+                        color: 'var(--text-muted)',
+                        letterSpacing: '0.06em',
+                        fontWeight: 400,
+                      }}>
+                        {h.label}
+                      </th>
+                    )
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {jobs.map((job, i) => (
-                  <tr
-                    key={job.id}
-                    style={{
-                      borderBottom: i < jobs.length - 1 ? '1px solid var(--border)' : 'none',
-                      cursor: 'pointer',
-                      transition: 'background 0.1s',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                    onClick={() => router.push(`/jobs/${job.id}`)}
-                  >
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)' }}>
-                        {truncate(job.name, 22)}
-                      </div>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-muted)' }}>
-                        {truncate(job.sequence, 18)}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                        {job.target_property ?? '—'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <StatusBadge status={job.status} />
-                    </td>
-                    <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--accent)' }}>
-                      {job.plddt_score ? job.plddt_score.toFixed(1) : '—'}
-                    </td>
-                    <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--cyan)' }}>
-                      {job.rosetta_energy ? job.rosetta_energy.toFixed(1) : '—'}
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                      {formatDate(job.created_at)}
-                    </td>
-                    <td style={{ padding: '12px 16px' }} onClick={e => e.stopPropagation()}>
-                      <button
-                        className='bg-red-200'
-                        onClick={e => handleDelete(job.id, e)}
-                        style={{
-                          border: 'none',
-                          color: 'var(--text-muted)', cursor: 'pointer',
-                          padding: 4, borderRadius: 4,
-                          transition: 'color 0.15s',
-                        }}
-                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--red)')}
-                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
-                      >
-                        <Trash2 className='h-4 w-4 text-red-500' />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filtered.map((job, i) => {
+                  const isSelected = selected.includes(job.id)
+                  return (
+                    <tr
+                      key={job.id}
+                      style={{
+                        borderBottom: i < filtered.length - 1 ? '1px solid var(--border)' : 'none',
+                        cursor: 'pointer',
+                        transition: 'background 0.1s',
+                        background: isSelected ? 'var(--accent-dim)' : 'transparent',
+                      }}
+                      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-elevated)' }}
+                      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
+                      onClick={() => router.push(`/jobs/${job.id}`)}
+                    >
+
+                      <td style={{ padding: '10px 14px' }} onClick={e => { e.stopPropagation(); toggleSelect(job.id) }}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelect(job.id)}
+                          style={{ cursor: 'pointer', accentColor: 'var(--accent)' }}
+                        />
+                      </td>
+
+
+                      <td style={{ padding: '10px 14px' }}>
+                        <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-primary)' }}>
+                          {truncate(job.name, 26)}
+                        </div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+                          {truncate(job.sequence, 20)}
+                        </div>
+                      </td>
+
+                      <td style={{ padding: '10px 14px' }}>
+                        <StatusBadge status={job.status} />
+                      </td>
+
+                      <td style={{ padding: '10px 14px' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                          {job.target_property ?? '—'}
+                        </span>
+                      </td>
+
+
+                      <td style={{ padding: '10px 14px' }}>
+                        <span style={{
+                          fontFamily: 'var(--font-mono)', fontSize: '12px',
+                          color: job.plddt_score
+                            ? job.plddt_score >= 70 ? 'var(--accent)' : 'var(--amber)'
+                            : 'var(--text-muted)',
+                        }}>
+                          {job.plddt_score ? job.plddt_score.toFixed(1) : '—'}
+                        </span>
+                      </td>
+
+                      <td style={{ padding: '10px 14px' }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--cyan)' }}>
+                          {job.rosetta_energy ? job.rosetta_energy.toFixed(1) : '—'}
+                        </span>
+                      </td>
+
+
+                      <td style={{ padding: '10px 14px' }}>
+                        {job.reward_history && job.reward_history.length > 1 ? (
+                          <Sparkline
+                            data={job.reward_history}
+                            width={60} height={20}
+                            color={job.status === 'completed' ? '#10b981' : 'var(--accent)'}
+                          />
+                        ) : (
+                          <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>—</span>
+                        )}
+                      </td>
+
+                      <td style={{ padding: '10px 14px', fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>
+                        {formatDate(job.created_at)}
+                      </td>
+
+                      <td style={{ padding: '10px 14px' }} onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={e => handleDeleteClick(job.id, e)}
+                          disabled={deleting === job.id}
+                          style={{
+                            background: 'none', border: 'none',
+                            color: 'var(--text-muted)', cursor: 'pointer',
+                            padding: 4, borderRadius: 4,
+                            transition: 'color 0.15s',
+                            opacity: deleting === job.id ? 0.4 : 1,
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.color = 'var(--red)')}
+                          onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+                        >
+                          <Trash2Icon className='h-4 w-4' />
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           )}
         </div>
       </div>
+
+      <CompareSelector
+        selected={selected}
+        jobs={jobs}
+        onToggle={toggleSelect}
+        onClear={() => setSelected([])}
+      />
+
+      <JobSubmitDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onSuccess={() => mutate()}
+      />
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={handleConfirmDelete}
+        title="Delete design job"
+        description="This will permanently delete the job and all associated structures. This action cannot be undone."
+        confirmText="Delete job"
+        variant="destructive"
+      />
     </div>
   )
 }

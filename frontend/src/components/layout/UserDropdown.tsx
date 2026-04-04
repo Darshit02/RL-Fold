@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   DropdownMenu,
@@ -11,10 +12,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAppStore } from '@/store'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 
 export function UserDropdown() {
   const router = useRouter()
   const { user, logout } = useAppStore()
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
 
   function handleLogout() {
     logout()
@@ -106,15 +109,25 @@ export function UserDropdown() {
         </DropdownMenuItem>
         <DropdownMenuSeparator style={{ background: 'var(--border)' }} />
         <DropdownMenuItem
-          onClick={handleLogout}
+          onClick={() => setLogoutConfirmOpen(true)}
           style={{ color: 'var(--red)', cursor: 'pointer', fontSize: '12px' }}
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ marginRight: 8 }}>
             <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Sign out
+          Logout
         </DropdownMenuItem>
       </DropdownMenuContent>
+
+      <ConfirmDialog
+        open={logoutConfirmOpen}
+        onOpenChange={setLogoutConfirmOpen}
+        onConfirm={handleLogout}
+        title="Sign out"
+        description="Are you sure you want to sign out of your account?"
+        confirmText="Sign out"
+        variant="destructive"
+      />
     </DropdownMenu>
   )
 }
